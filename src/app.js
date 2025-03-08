@@ -13,7 +13,10 @@ app.post("/signup", async (req, res) => {
     await user.save(); // saving the user to the database, also we can say document is saved to the database
     res.send("User added successfully");
   } catch (err) {
-    res.status(400).send("Error adding user:", err.message);
+    if (err.code === 11000) {
+      return res.status(400).send("Error: Email already exists");
+    }
+    res.status(400).send(`Error adding user: ${err.message}`);
   }
 });
 
@@ -22,7 +25,38 @@ app.get("/feed", async (req, res) => {
     const users = await User.find({});
     res.send(users);
   } catch (err) {
-    res.status(400).send("Error retrieving users:", err.message);
+    res.status(400).send(`Error retrieving users: ${err.message}`);
+  }
+});
+
+app.delete("/user", async (req, res) => {
+  const userId = req.body.userId;
+  try {
+    const user = await User.findByIdAndDelete({ _id: userId });
+    if (!user) {
+      return res.status(404).send("User not found");
+    }
+    res.send("User deleted successfully");
+  } catch (err) {
+    res.status(400).send(`Error deleting user: ${err.message}`);
+  }
+});
+
+app.patch("/user", async (req, res) => {
+  const userId = req.body.userId;
+  const updates = req.body;
+
+  try {
+    const user = await User.findByIdAndUpdate({ _id: userId }, updates, {
+      new: true,
+      runValidators: true,
+    });
+    if (!user) {
+      return res.status(404).send("User not found");
+    }
+    res.send("User updated successfully");
+  } catch (err) {
+    res.status(400).send(`Error updating user: ${err.message}`);
   }
 });
 
