@@ -34,12 +34,12 @@ const userSchema = new mongoose.Schema(
     },
     gender: {
       type: String,
-      validate(value) {
-        const validGenders = ["Male", "Female", "Other"];
-        if (!validGenders.includes(value)) {
-          return "Error: Invalid gender";
-        }
-        return true;
+      validate: {
+        validator: function (value) {
+          const validGenders = ["Male", "Female", "Other"];
+          return validGenders.includes(value);
+        },
+        message: (props) => `${props.value} is not a valid gender!`, // Custom error message
       },
     },
     photoURL: {

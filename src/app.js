@@ -6,10 +6,11 @@ const User = require("./models/user");
 app.use(express.json()); // This middleware parses incoming requests with JSON payloads for all the routes
 
 app.post("/signup", async (req, res) => {
-  const user = new User(req.body); // we created a new user with req.body or we can say we created a new instance of the User model
-  // whoever sends the post request to the /signup route, a new user instance is created
-  // now we will save this user to the database
   try {
+    const user = new User(req.body); // we created a new user with req.body or we can say we created a new instance of the User model
+    // whoever sends the post request to the /signup route, a new user instance is created
+    // now we will save this user to the database
+
     await user.save(); // saving the user to the database, also we can say document is saved to the database
     res.send("User added successfully");
   } catch (err) {
@@ -42,11 +43,26 @@ app.delete("/user", async (req, res) => {
   }
 });
 
-app.patch("/user", async (req, res) => {
-  const userId = req.body.userId;
+app.patch("/user/:userId", async (req, res) => {
+  const userId = req.params.userId;
   const updates = req.body;
 
   try {
+    const ALLOWED_UPDATES = ["age", "gender", "photoURL", "about", "skills"];
+
+    const isUpdateAllowed = Object.keys(updates).every((key) =>
+      ALLOWED_UPDATES.includes(key)
+    );
+    if (!isUpdateAllowed) {
+      throw new Error("Invalid update");
+    }
+
+    if (updates.age < 18 || updates.age > 100) {
+      throw new Error("Age must be between 18 and 100");
+    }
+    if (updates.skills.length > 10) {
+      throw new Error("Skills must be less than 10");
+    }
     const user = await User.findByIdAndUpdate({ _id: userId }, updates, {
       new: true,
       runValidators: true,
