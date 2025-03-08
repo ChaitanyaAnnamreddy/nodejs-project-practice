@@ -1,4 +1,5 @@
 const mongoose = require("mongoose");
+const validator = require("validator");
 
 const userSchema = new mongoose.Schema(
   {
@@ -22,10 +23,26 @@ const userSchema = new mongoose.Schema(
       unique: true,
       lowercase: true,
       trim: true,
+      validate: {
+        validator: validator.isEmail,
+        message: "Invalid email",
+      },
     },
     password: {
       type: String,
       required: true,
+      validate: {
+        validator: function (value) {
+          return validator.isStrongPassword(value);
+        },
+        message: (props) =>
+          `${props.value} is not a strong password. A strong password must:  
+  - Be at least 8 characters long  
+  - Contain at least 1 lowercase letter  
+  - Contain at least 1 uppercase letter  
+  - Contain at least 1 number  
+  - Contain at least 1 special character (!@#$%^&* etc.)`,
+      },
     },
     age: {
       type: Number,
@@ -39,11 +56,17 @@ const userSchema = new mongoose.Schema(
           const validGenders = ["Male", "Female", "Other"];
           return validGenders.includes(value);
         },
-        message: (props) => `${props.value} is not a valid gender!`, // Custom error message
+        message: (props) => `${props.value} is not a valid gender!`,
       },
     },
     photoURL: {
       type: String,
+      default:
+        "https://www.arihantsugar.com/assets/upload/grid_img/672085056_image.png",
+      validate: {
+        validator: validator.isURL,
+        message: "Invalid URL",
+      },
     },
     about: {
       type: String,
