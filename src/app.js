@@ -1,80 +1,17 @@
 const express = require("express");
 const connectDB = require("./config/database");
+const cookieParser = require("cookie-parser");
+const authRouter = require("./routes/auth");
+const profileRouter = require("./routes/profile");
+const requestsRouter = require("./routes/requests");
+
 const app = express();
-const User = require("./models/user");
 
+app.use(cookieParser()); // This middleware parses the cookies from the request - when the user logs in we will be able to read the cookie
 app.use(express.json()); // This middleware parses incoming requests with JSON payloads for all the routes
-
-app.post("/signup", async (req, res) => {
-  try {
-    const user = new User(req.body); // we created a new user with req.body or we can say we created a new instance of the User model
-    // whoever sends the post request to the /signup route, a new user instance is created
-    // now we will save this user to the database
-
-    await user.save(); // saving the user to the database, also we can say document is saved to the database
-    res.send("User added successfully");
-  } catch (err) {
-    if (err.code === 11000) {
-      return res.status(400).send("Error: Email already exists");
-    }
-    res.status(400).send(`Error adding user: ${err.message}`);
-  }
-});
-
-app.get("/feed", async (req, res) => {
-  try {
-    const users = await User.find({});
-    res.send(users);
-  } catch (err) {
-    res.status(400).send(`Error retrieving users: ${err.message}`);
-  }
-});
-
-app.delete("/user", async (req, res) => {
-  const userId = req.body.userId;
-  try {
-    const user = await User.findByIdAndDelete({ _id: userId });
-    if (!user) {
-      return res.status(404).send("User not found");
-    }
-    res.send("User deleted successfully");
-  } catch (err) {
-    res.status(400).send(`Error deleting user: ${err.message}`);
-  }
-});
-
-app.patch("/user/:userId", async (req, res) => {
-  const userId = req.params.userId;
-  const updates = req.body;
-
-  try {
-    const ALLOWED_UPDATES = ["age", "gender", "photoURL", "about", "skills"];
-
-    const isUpdateAllowed = Object.keys(updates).every((key) =>
-      ALLOWED_UPDATES.includes(key)
-    );
-    if (!isUpdateAllowed) {
-      throw new Error("Invalid update");
-    }
-
-    if (updates.age < 18 || updates.age > 100) {
-      throw new Error("Age must be between 18 and 100");
-    }
-    if (updates.skills.length > 10) {
-      throw new Error("Skills must be less than 10");
-    }
-    const user = await User.findByIdAndUpdate({ _id: userId }, updates, {
-      new: true,
-      runValidators: true,
-    });
-    if (!user) {
-      return res.status(404).send("User not found");
-    }
-    res.send("User updated successfully");
-  } catch (err) {
-    res.status(400).send(`Error updating user: ${err.message}`);
-  }
-});
+app.use("/", authRouter);
+app.use("/", profileRouter);
+app.use("/", requestsRouter);
 
 connectDB()
   .then(() => {
