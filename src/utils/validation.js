@@ -12,4 +12,34 @@ const validateSignUpData = (req) => {
   }
 };
 
-module.exports = { validateSignUpData };
+const validateEditProfileData = (req) => {
+  const allowedEditFields = [
+    "firstName",
+    "lastName",
+    "photoURL",
+    "age",
+    "about",
+    "skills",
+  ];
+
+  for (const field of Object.keys(req.body)) {
+    if (!allowedEditFields.includes(field)) {
+      return `Editing "${field}" is not allowed`;
+    }
+  }
+
+  if ("age" in req.body && isNaN(req.body.age)) {
+    return "Age must be a valid number";
+  }
+
+  if ("skills" in req.body && !Array.isArray(req.body.skills)) {
+    return "Skills must be an array";
+  }
+
+  return null; // ✅ No errors
+};
+
+module.exports = {
+  validateSignUpData,
+  validateEditProfileData,
+};

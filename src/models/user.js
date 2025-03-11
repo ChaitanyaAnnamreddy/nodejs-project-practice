@@ -11,6 +11,7 @@ const userSchema = new mongoose.Schema(
       minLength: 2,
       maxLength: 50,
       trim: true,
+      index: true,
     },
     lastName: {
       type: String,
@@ -48,17 +49,15 @@ const userSchema = new mongoose.Schema(
     },
     age: {
       type: Number,
+
       min: 18,
       max: 100,
     },
     gender: {
       type: String,
-      validate: {
-        validator: function (value) {
-          const validGenders = ["Male", "Female", "Other"];
-          return validGenders.includes(value);
-        },
-        message: (props) => `${props.value} is not a valid gender!`,
+      enum: {
+        values: ["Male", "Female", "Other"],
+        message: `{VALUE} is not a valid gender!`,
       },
     },
     photoURL: {
